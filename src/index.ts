@@ -1,16 +1,37 @@
 
 // GraphQL Implementation
+require("dotenv").config(); 
+// run the code early to prevent ESLint warning error
+// and also helps prevent compilation issues where other imported files don't pick up environment variables.
 
 import { ApolloServer } from "apollo-server-express";
-import express from 'express';
+import  express, { Application}  from 'express';
 
 import { typeDefs, resolvers } from './graphql';
+import { connectDatabase } from "./database";
 
-const app = express();
-const server = new ApolloServer({ typeDefs, resolvers });
+//const app = express();
+// const server = new ApolloServer({ typeDefs, resolvers });
 
-server.applyMiddleware({ app, path: "/api" });
+// server.applyMiddleware({ app, path: "/api" });
 
+const mount = async (app: Application) =>{
+    const port = 4000;
+    const db = await connectDatabase();
+
+    const server = new ApolloServer({ typeDefs, resolvers, context: () => ({ db }) });
+
+    server.applyMiddleware({ app, path: "/api" });
+
+    const listings = await db.listings.find({}).toArray();
+    console.log(listings);
+
+    app.listen(process.env.PORT);
+
+    console.log(`[app]: http://localhost:${process.env.PORT}`);
+}
+
+mount(express())
 // REST Implementation
 // import express from 'express';
 // import bodyParser from "body-parser";
@@ -19,7 +40,7 @@ server.applyMiddleware({ app, path: "/api" });
 // import { listings } from './listings';
 
 
-const port = 4000;
+//const port = 4000;
 
 // app.use(bodyParser.json());
 
@@ -45,6 +66,6 @@ const port = 4000;
 //   })
 
 
-app.listen(port);
+//app.listen(port);
 
-console.log(`[app] : http://localhost:${port}`);
+//console.log(`[app] : http://localhost:${port}`);
